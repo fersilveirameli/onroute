@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+<meta charset="utf-8">
+<title>Waypoints in directions</title>
+<link href="https://developers.google.com//maps/documentation/javascript/examples/default.css" rel="stylesheet">
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyBa-KA8bvzD6NZN8fOVcmN6ezrL5GA1dXE&sensor=true"></script>
+<script>
+	var directionsDisplay;
+	var directionsService = new google.maps.DirectionsService();
+	var map;
+
+	 $( document ).ready(function() {
+
+		 initialize();
+		 
+		 $.getJSON('api/v1/vehicle', function(data) {
+
+
+
+
+			 var vehicles = data.vehicles; //jQuery.parseJSON( '{"vehicles":[{"name":"V01","itinerary":{"origin":"florianopolis, sc","destination":"florianopolis, sc","wayPoints":["alfredo wagner, sc","urubici, sc","lages, sc","vacaria, rs","caxias do sul, rs","osorio, rs"]},"currentPosition":{"latitude":-27.693465,"longitude":-48.966064}}]}' );
+			 var vehicle = vehicles[0];
+			  
+			 var itinerary = vehicle.itinerary;
+
+			  var start = itinerary.origin;
+				var end = itinerary.destination;
+				var waypts = [];
+				
+				for ( var i = 0; i < itinerary.wayPoints.length; i++) {
+					
+						waypts.push({
+							location : itinerary.wayPoints[i],
+							stopover : true
+						});
+					
+				}
+	
+				var request = {
+					origin : start,
+					destination : end,
+					waypoints : waypts,
+					optimizeWaypoints : true,
+					travelMode : google.maps.TravelMode.DRIVING
+				};
+				
+				directionsService.route(request, function(response, status) {
+					if (status == google.maps.DirectionsStatus.OK) {
+						directionsDisplay.setDirections(response);
+						var route = response.routes[0];
+						var summaryPanel = document.getElementById('directions_panel');
+						summaryPanel.innerHTML = '';
+						// For each route, display summary information.
+						for ( var i = 0; i < route.legs.length; i++) {
+							var routeSegment = i + 1;
+							summaryPanel.innerHTML += '<b>Route Segment: ' + routeSegment + '</b><br>';
+							summaryPanel.innerHTML += route.legs[i].start_address + ' to ';
+							summaryPanel.innerHTML += route.legs[i].end_address + '<br>';
+							summaryPanel.innerHTML += route.legs[i].distance.text + '<br><br>';
+						}
+					}
+				});
+				
+			});
+	 });
+
+	function initialize() {
+		directionsDisplay = new google.maps.DirectionsRenderer();
+		var chicago = new google.maps.LatLng(-27.693465,-48.966064);
+		var mapOptions = {
+			zoom : 6,
+			mapTypeId : google.maps.MapTypeId.ROADMAP,
+			center : chicago
+		}
+		map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+		directionsDisplay.setMap(map);
+		
+		
+		var contentString = 'teste';
+
+		var infowindow = new google.maps.InfoWindow({
+			content : contentString
+		});
+		
+		var position = new google.maps.LatLng(-27.693465,-48.966064);
+
+		var marker = new google.maps.Marker({
+			position :  position,
+			map : map,
+			title : 'frota'
+		});
+
+		google.maps.event.addListener(marker, 'click', function() {
+			infowindow.open(map, marker);
+		});
+		
+		
+		
+		setInterval(function(){
+			marker.setPosition(new google.maps.LatLng(-27.699545,-49.063568)); 	
+			},8000);
+		
+	}
+
+	
+
+	
+
+	
+// 	google.maps.event.addDomListener(window, 'load', initialize);
+	
+	
+	
+
+	
+</script>
+</head>
+<body>
+	<div id="map-canvas" style="float: left; width: 70%; height: 100%;"></div>
+	<div id="control_panel" style="float: right; width: 30%; text-align: left; padding-top: 20px">
+		<div id="directions_panel" style="margin: 20px; background-color: #FFEE77;"></div>
+	</div>
+</body>
+</html>
